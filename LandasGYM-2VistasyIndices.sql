@@ -4,7 +4,7 @@ USE LandasGYM;
 
 ------ Vistas
 /** Utilería por Clase **/
-CREATE VIEW VW_UtileriaPorClase
+CREATE OR ALTER VIEW VW_UtileriaPorClase
 AS
 SELECT
     C.Nombre AS NombreClase,
@@ -12,16 +12,17 @@ SELECT
     C.HoraInicio,
     U.Tipo_utileria,
     U.Descripcion AS DescripcionUtileria,
-    U.Ultimo_mantenimiento
+    U.Ultimo_mantenimiento,
+	RANK() OVER(ORDER BY C.Id_Clase) AS Ranking_Utilerias
 FROM
     ElementosGimnasio.Clases AS C
 JOIN
     ElementosGimnasio.Utilerias AS U ON C.Id_Clase = U.Id_Clase;
-/* Activacion SELECT * FROM ElementosGimnasio.VW_UtileriaPorClase;*/
+/* Activacion SELECT * FROM VW_UtileriaPorClase; */
 
 
 /** Mantenimiento por Utilería **/
-CREATE VIEW VW_MantenimientoPorUtileria
+CREATE OR ALTER VIEW VW_MantenimientoPorUtileria
 AS
 SELECT
     U.Tipo_utileria,
@@ -30,7 +31,8 @@ SELECT
     M.Resumen_mantenimiento,
     M.Proximo_Mantenimiento,
     E.Nombre AS NombreEmpleado,
-    E.Apellido AS ApellidoEmpleado
+    E.Apellido AS ApellidoEmpleado,
+    ROW_NUMBER() OVER (PARTITION BY U.Id_Utileria ORDER BY M.Proximo_Mantenimiento DESC) AS NumeroMantenimiento
 FROM
     ElementosGimnasio.Utilerias AS U
 JOIN
@@ -39,11 +41,11 @@ JOIN
     MiembrosAlmacenados.Miembros AS E ON M.Id_Miembro = E.Id_Miembro
 WHERE
     E.Tipo_Miembro = 'Empleado'; -- Asegura que solo se muestre el empleado responsable
-/* Activacion SELECT * FROM RegistrosAlmacenados.VW_MantenimientoPorUtileria; */
+/* Activacion SELECT * FROM VW_MantenimientoPorUtileria; */
 
 
 /** Miembros por Gimnasio **/
-CREATE VIEW VW_MiembrosPorGimnasio AS
+CREATE OR ALTER VIEW VW_MiembrosPorGimnasio AS
 SELECT 
     g.Id_Gimnasio,
     g.Nombre AS NombreGimnasio,
@@ -55,11 +57,11 @@ SELECT
 FROM ElementosGimnasio.Gimnasio g
 JOIN MiembrosAlmacenados.Miembros m 
     ON g.Id_Gimnasio = m.Id_Gimnasio;
-/* Activacion  SELECT * FROM VistaMiembrosPorGimnasio; */
+/* Activacion  SELECT * FROM VW_MiembrosPorGimnasio; */
 
 
 /** Clases por Gimnasio**/
-CREATE VIEW VW_ClasesPorGimnasio AS
+CREATE OR ALTER VIEW VW_ClasesPorGimnasio AS
 SELECT 
     g.Id_Gimnasio,
     g.Nombre AS NombreGimnasio,
@@ -68,11 +70,12 @@ SELECT
     c.Cupo_Max,
     c.Dias,
     c.HoraInicio,
-    c.HoraFin
+    c.HoraFin,
+	RANK() OVER(PARTITION BY g.Id_Gimnasio ORDER BY c.Cupo_Max DESC) AS Ranking_Cupo
 FROM ElementosGimnasio.Gimnasio g
 JOIN ElementosGimnasio.Clases c 
     ON g.Id_Gimnasio = c.Id_Gimnasio;
-/* Activacion SELECT * FROM VistaClasesPorGimnasio; */
+/* Activacion SELECT * FROM VW_ClasesPorGimnasio; */
 
 
 
